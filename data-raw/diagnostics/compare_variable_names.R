@@ -5,7 +5,7 @@ library(readr)
 library(fs)
 
 # ✅ Path to your raw NSQIP PUF files
-puf_dir <- "F:/Research/UTMB/NSQIP/NSQIP_PUF/NSQIP_txt"  # <-- Update if needed
+puf_dir <- "/Users/addimoya/NSQIP_PUF/acs_nsqip_puf"  # <-- Update if needed
 
 # 🔍 Function to extract headers and attach year
 get_headers <- function(file_path) {
@@ -45,5 +45,15 @@ headers_wide <- headers_long %>%
 # 📁 Ensure output folder exists
 dir_create("data-raw/variable_maps")
 
+# 📅 Sort year columns numerically
+year_cols <- headers_wide %>%
+  select(-variable) %>%
+  colnames() %>%
+  sort()
+
+headers_wide <- headers_wide %>%
+  select(variable, all_of(year_cols))
+
 # 💾 Write to CSV
 write_csv(headers_wide, "data-raw/variable_maps/variable_presence_matrix.csv")
+
