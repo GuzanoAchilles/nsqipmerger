@@ -1,60 +1,48 @@
-library(tidyverse)      # dplyr helpers
-library(data.table)     # fread()
-library(vroom)          # fast streaming write
-library(fs)
+# ── libraries ───────────────────────────────────────────────────────────────
+library(tidyverse)   # dplyr + readr + purrr
+library(fs)          # dir_create()
 
-# -------------------------------------------------------------------------
-puf_dir <- "/Users/addimoya/NSQIP_PUF/acs_nsqip_puf"
-files   <- dir_ls(puf_dir, regexp = "\\.txt$|\\.csv$") %>% sort()
-out_csv <- "data-raw/nsqip_merged_2013_2023.csv"
+# ── 1)  paths you edit just once ────────────────────────────────────────────
+old_csv <- "data-raw/nsqip_merged_2013_2014.csv"               # current merged
+new_puf <- "/Users/addimoya/NSQIP_PUF/acs_nsqip_puf/acs_nsqip_puf15.txt"  # next year
+new_year <- 2015
+out_csv <- "data-raw/nsqip_merged_2013_2014_2015.csv"
 
-dir_create("data-raw")
-if (file_exists(out_csv)) file_delete(out_csv)   # start fresh
-
-# ---------- helper --------------------------------------------------------
-read_year <- function(path) {
-  yr <- as.integer(paste0("20", stringr::str_extract(path, "\\d{2}(?=\\.txt$|\\.csv$)")))
-  dt <- fread(path, sep = "\t", data.table = FALSE, showProgress = FALSE)
-  names(dt) <- toupper(trimws(names(dt)))
-  dt$YEAR <- yr
-  dt
+# ── 2) read-&-clean helper (no pipes inside) ───────────────────────────────
+read_and_clean <- function(path, yr) {
+  df <- read_delim(path, delim = "\t", show_col_types = FALSE)
+  names(df) <- toupper(trimws(names(df)))
+  df$YEAR <- yr
+  df
 }
 
-safe_bind_two <- function(a, b) {
+# ── 3) safe bind that fixes only real type clashes ─────────────────────────
+safe_bind <- function(a, b) {
   common   <- intersect(names(a), names(b))
-  clashes  <- common[
-    map_chr(a[common], ~ class(.x)[1]) !=
-      map_chr(b[common], ~ class(.x)[1])
-  ]
+  clashes  <- common[ map_chr(a[common], ~ class(.x)[1]) !=
+                        map_chr(b[common], ~ class(.x)[1]) ]
   if (length(clashes)) {
-    message("→ To character: ", paste(clashes, collapse = ", "))
+    message("Converting to character: ", paste(clashes, collapse = ", "))
     a <- mutate(a, across(all_of(clashes), as.character))
     b <- mutate(b, across(all_of(clashes), as.character))
   }
   bind_rows(a, b)
 }
 
-# ---------- streaming loop -----------------------------------------------
-acc <- NULL  # small accumulator: never holds > 2 years
+# ── 4) merge the new year in  ──────────────────────────────────────────────
+message("▶ reading existing merged CSV …")
+merged_so_far <- read_csv(old_csv, show_col_types = FALSE)
 
-for (f in files) {
-  message("Reading ", basename(f))
-  df_y <- read_year(f)
-  
-  if (is.null(acc)) {
-    acc <- df_y                          # first file
-  } else {
-    acc <- safe_bind_two(acc, df_y)      # merge with accumulator
-  }
-  
-  # ----- append to CSV & free memory -----
-  vroom_write(acc,
-              path   = out_csv,
-              delim  = ",",
-              append = file_exists(out_csv))   # header only once
-  
-  acc <- NULL        # drop from RAM
-  gc()               # encourage garbage collection
-}
+message("▶ reading ", basename(new_puf), " …")
+year_df <- read_and_clean(new_puf, new_year)
 
-message("✅ Streaming merge finished: ", out_csv)
+message("▶ merging …")
+merged_new <- safe_bind(merged_so_far, year_df)
+
+# ── 5) write updated CSV  (+ RDS for R users) ──────────────────────────────
+dir_create("data-raw")                 # harmless if already exists
+
+write_csv(merged_new, out_csv)
+write_rds(merged_new, sub("\\.csv$", ".rds", out_csv))
+
+message("✅  wrote ", out_csv)
