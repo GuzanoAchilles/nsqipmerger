@@ -43,6 +43,5 @@ merged_new <- safe_bind(merged_so_far, year_df)
 dir_create("data-raw")                 # harmless if already exists
 
 write_csv(merged_new, out_csv)
-write_rds(merged_new, sub("\\.csv$", ".rds", out_csv))
 
 message("✅  wrote ", out_csv)
