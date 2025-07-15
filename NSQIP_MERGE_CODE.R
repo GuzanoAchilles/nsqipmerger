@@ -86,12 +86,8 @@ merged_13_14 <- safe_merge_two_years(file_2013, file_2014, 2013, 2014)
 dir_create("data-raw")
 
 # CSV export
-csv_path <- "data-raw/nsqip_merged_2013_2014.csv"
+csv_path <- "data-raw/nsqip_merged_2013_2015.csv"
 write_csv(merged_13_14, csv_path)
 message("✅ CSV saved to: ", csv_path)
 
-# Optional: RDS export (smaller, keeps types)
-rds_path <- "data-raw/nsqip_merged_2013_2014.rds"
-write_rds(merged_13_14, rds_path)
-message("✅ RDS saved to: ", rds_path)
 
