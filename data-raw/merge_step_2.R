@@ -9,9 +9,9 @@ Sys.setenv("R_MAX_VSIZE" = "24GB")   # ① increase heap
 # ... your functions read_puf(), safe_merge_two_years() ...
 
 # ── 1)  paths you edit each time ─────────────────────────────
-old_merge <- "/Users/addimoya/NSQIP_PUF/acs_nsqip_puf/nsqip_merged_2013_2015.txt"                # <-- previous file
-new_puf   <- "/Users/addimoya/NSQIP_PUF/acs_nsqip_puf/acs_nsqip_puf16.txt"  # <-- new PUF
-new_year  <- 2016                                                 # <-- its year
+old_merge <- "E:/NSQIP_txt/nsqip_merged_2013_2014.txt"                # <-- previous file
+new_puf   <- "E:/NSQIP_txt/acs_nsqip_puf15.txt"  # <-- new PUF
+new_year  <- 2015                                                 # <-- its year
 
 # ── 2)  helpers (same as before) ──────────────────────────────
 clean_names <- function(nms) {

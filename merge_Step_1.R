@@ -4,10 +4,12 @@
 
 library(tidyverse)   # dplyr, readr, %>%
 library(fs)
+library(haven)      # write_sav()
+
 
 # ---- 1)  paths --------------------------------------------------------------
-puf_2013 <- "/Users/addimoya/NSQIP_PUF/acs_nsqip_puf/acs_nsqip_puf13.txt"
-puf_2014 <- "/Users/addimoya/NSQIP_PUF/acs_nsqip_puf/acs_nsqip_puf14.txt"
+puf_2013 <- "E:/NSQIP_txt/acs_nsqip_puf13.txt"
+puf_2014 <- "E:/NSQIP_txt/acs_nsqip_puf14.txt"
 
 # ---- 2)  helpers ------------------------------------------------------------
 clean_names <- function(nms) {
@@ -50,9 +52,20 @@ message("✔ merged rows: ", nrow(merged_13_14),
 dir_create("data-raw")
 
 txt_path <- "data-raw/nsqip_merged_2013_2014.txt"
-write_delim(merged_13_14, txt_path, delim = "\t", quote_escape = "double")
+write_delim(merged_13_14, txt_path, delim = "\t", escape = "double")
 
-rds_path <- "data-raw/nsqip_merged_2013_2014.rds"
-saveRDS(merged_13_14, rds_path, compress = "xz")
 
-message("✅  Wrote files:\n   • ", txt_path, "\n   • ", rds_path)
+# --- your merge code up to `merged_13_14` ---------------------
+# merged_13_14 <- safe_bind(...)
+# -------------------------------------------------------------
+
+dir_create("data-raw")
+sav_path <- "data-raw/nsqip_merged_2013_2014.sav"
+
+
+write_sav(merged_13_14, sav_path)     # ← one line, done
+
+
+message("✅  Wrote SPSS file: ", sav_path)
+
+message("✅  Wrote files:\n   • ", txt_path, "\n   • ")
